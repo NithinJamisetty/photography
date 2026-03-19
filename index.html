@@ -24,11 +24,37 @@
                     A private space for your event’s collective memories. Scan, upload, and relive every perspective.
                 </p>
                 
-                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 40px;">
                     <a href="dashboard.html" class="btn">Create an Event</a>
-                    <a href="gallery.html" class="btn btn-outline">Join with Token</a>
+                    <button id="showTokenInput" class="btn btn-outline">Join with Token</button>
+                </div>
+
+                <!-- Hidden Token Input Area -->
+                <div id="tokenEntry" style="display: none; background: var(--bg-secondary); padding: 30px; border-radius: 4px; max-width: 400px; animation: fadeUp 0.5s forwards;">
+                    <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 12px;">Enter Access Token</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="manualToken" placeholder="E.G. AB12XY" 
+                               style="flex: 1; padding: 15px; border: 1px solid var(--border); border-radius: 4px; font-family: var(--font-main); outline: none; text-transform: uppercase;">
+                        <button id="joinGallery" class="btn" style="padding: 15px 25px;">Go</button>
+                    </div>
                 </div>
             </div>
+
+            <script>
+                document.getElementById('showTokenInput').onclick = () => {
+                    document.getElementById('tokenEntry').style.display = 'block';
+                    document.getElementById('showTokenInput').style.display = 'none';
+                };
+
+                document.getElementById('joinGallery').onclick = () => {
+                    const token = document.getElementById('manualToken').value.trim();
+                    if (token) {
+                        window.location.href = `gallery.html?token=${token}`;
+                    } else {
+                        alert("Please enter a valid token.");
+                    }
+                };
+            </script>
 
             <div class="fade-up" style="margin-top: 100px; animation-delay: 0.3s;">
                 <div class="img-reveal" style="height: 60vh; width: 100%;">

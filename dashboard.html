@@ -84,11 +84,21 @@
 
                 try {
                     console.log("Adding event to Firestore...");
-                    await db.collection("events").add({
-                        name: name,
-                        token: token,
-                        createdAt: new Date().toISOString()
-                    });
+                    
+                    // Create a timeout promise
+                    const timeout = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error("Request timed out. Please check your Firestore rules and internet connection.")), 10000)
+                    );
+
+                    // Race the add() call against the timeout
+                    await Promise.race([
+                        db.collection("events").add({
+                            name: name,
+                            token: token,
+                            createdAt: new Date().toISOString()
+                        }),
+                        timeout
+                    ]);
 
                     displayToken.innerText = token;
                     
