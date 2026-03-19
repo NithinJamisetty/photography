@@ -92,24 +92,21 @@
     <!-- Load Configuration First -->
     <script src="config.js"></script>
 
+    <!-- Load Firebase Configuration (Protected) -->
+    <script src="config.js"></script>
+
     <!-- Firebase SDKs (Compat v8) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
     <script>
-        // Inline Configuration for Reliability on local file://
-        const firebaseConfig = {
-          apiKey: "AIzaSyC7MAQC7PooiY9CtghwwyRAYXWoh2T5nXc",
-          authDomain: "photography-c66bd.firebaseapp.com",
-          projectId: "photography-c66bd",
-          storageBucket: "photography-c66bd.firebasestorage.app",
-          messagingSenderId: "382347949528",
-          appId: "1:382347949528:web:a7ee305c463c7f88a86ead"
-        };
-
         try {
-            // Initialize Firebase
+            // Initialize Firebase using the global firebaseConfig from config.js
+            if (typeof firebaseConfig === 'undefined') {
+                throw new Error("Configuration not found. Please ensure config.js exists.");
+            }
+
             firebase.initializeApp(firebaseConfig);
             const db = firebase.firestore();
             const storage = firebase.storage();
