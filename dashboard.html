@@ -49,21 +49,26 @@
         </div>
     </main>
 
-    <!-- Load Firebase Configuration First -->
-    <script src="config.js"></script>
-
     <!-- Firebase SDKs (Compat v8) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script>
-        // Check if config loaded
-        if (typeof firebaseConfig === 'undefined') {
-            alert("Configuration file (config.js) not found. Please ensure it exists and is correctly set up.");
-        } else {
+        // Inline Configuration for Reliability on local file://
+        const firebaseConfig = {
+          apiKey: "AIzaSyC7MAQC7PooiY9CtghwwyRAYXWoh2T5nXc",
+          authDomain: "photography-c66bd.firebaseapp.com",
+          projectId: "photography-c66bd",
+          storageBucket: "photography-c66bd.firebasestorage.app",
+          messagingSenderId: "382347949528",
+          appId: "1:382347949528:web:a7ee305c463c7f88a86ead"
+        };
+
+        try {
             // Initialize Firebase
             firebase.initializeApp(firebaseConfig);
             const db = firebase.firestore();
+            console.log("Firebase initialized successfully.");
 
             const form = document.getElementById('createEventForm');
             const successDiv = document.getElementById('eventSuccess');
@@ -73,10 +78,15 @@
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const submitBtn = e.target.querySelector('button');
+                submitBtn.innerText = "INITIALIZING...";
+                submitBtn.disabled = true;
+
                 const name = document.getElementById('eventName').value;
                 const token = Math.random().toString(36).substring(2, 8).toUpperCase();
 
                 try {
+                    console.log("Adding event to Firestore...");
                     await db.collection("events").add({
                         name: name,
                         token: token,
@@ -85,18 +95,28 @@
 
                     displayToken.innerText = token;
                     
-                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${window.location.origin}/gallery.html?token=${token}`;
+                    // Robust URL handling for local or hosted use
+                    const currentUrl = window.location.href;
+                    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                    const galleryLink = baseUrl + 'gallery.html?token=' + token;
+                    
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(galleryLink)}`;
                     qrContainer.innerHTML = `<img src="${qrUrl}" alt="Event QR Code" style="border: 1px solid var(--border); padding: 10px; border-radius: 4px;">`;
 
-                    goToGallery.href = `gallery.html?token=${token}`;
+                    goToGallery.href = galleryLink;
                     form.style.display = 'none';
                     successDiv.style.display = 'block';
 
                 } catch (error) {
-                    console.error("Error creating event: ", error);
-                    alert("Failed to create event. Please try again.");
+                    console.error("Critical Error: ", error);
+                    alert("FAILED: " + error.message);
+                    submitBtn.innerText = "INITIALIZE EVENT";
+                    submitBtn.disabled = false;
                 }
             });
+        } catch (initError) {
+            console.error("Firebase Init Failed: ", initError);
+            alert("Firebase could not be started. Check your internet connection.");
         }
     </script>
 </body>
