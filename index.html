@@ -3,83 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capture | Event Photo Sharing</title>
+    <title>Capture | Photographer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <nav class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 40px 0;">
-        <div style="font-size: 20px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Capture.</div>
-        <div style="display: flex; gap: 40px;">
-            <a href="#about" style="text-decoration: none; color: var(--text-muted); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Concept</a>
-            <a href="login.html" style="text-decoration: none; color: var(--text-main); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Sign In</a>
+    <!-- Floating Minimalist Navigation -->
+    <a href="#" class="nav-corner nav-tl brand-logo">CAPTURE.</a>
+    <div class="nav-corner nav-tr">
+        <a href="#portfolio">PORTFOLIO</a> &middot; 
+        <a href="login.html">CLIENT LOGIN</a> &middot; 
+        <a href="#about">INFO</a>
+    </div>
+
+    <!-- The Grid / Features -->
+    <section id="portfolio" class="masonry-grid">
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800" alt="Marriage">
+            <div class="m-caption">MARRIAGE</div>
         </div>
-    </nav>
+        
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=800" alt="Birthday">
+            <div class="m-caption">BIRTHDAYS</div>
+        </div>
+        
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=800" alt="Trip">
+            <div class="m-caption">TRAVEL</div>
+        </div>
 
-    <main>
-        <section class="container" style="padding-top: 60px;">
-            <div class="fade-up">
-                <h1 class="hero-title">Preserving the <br><span>unseen</span> moments.</h1>
-                <p style="max-width: 500px; color: var(--text-muted); margin-bottom: 60px; font-size: 18px;">
-                    A private space for your event’s collective memories. Scan, upload, and relive every perspective.
-                </p>
-                
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 40px;">
-                    <a href="dashboard.html" class="btn">Create an Event</a>
-                    <button id="showTokenInput" class="btn btn-outline">Join with Token</button>
-                </div>
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800" alt="Group">
+            <div class="m-caption">GROUP EVENTS</div>
+        </div>
 
-                <!-- Hidden Token Input Area -->
-                <div id="tokenEntry" style="display: none; background: var(--bg-secondary); padding: 30px; border-radius: 4px; max-width: 400px; animation: fadeUp 0.5s forwards;">
-                    <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 12px;">Enter Access Token</p>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="manualToken" placeholder="E.G. AB12XY" 
-                               style="flex: 1; padding: 15px; border: 1px solid var(--border); border-radius: 4px; font-family: var(--font-main); outline: none; text-transform: uppercase;">
-                        <button id="joinGallery" class="btn" style="padding: 15px 25px;">Go</button>
-                    </div>
-                </div>
-            </div>
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800" alt="Single Portrait">
+            <div class="m-caption">PORTRAITS</div>
+        </div>
 
-            <script>
-                document.getElementById('showTokenInput').onclick = () => {
-                    document.getElementById('tokenEntry').style.display = 'block';
-                    document.getElementById('showTokenInput').style.display = 'none';
-                };
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800" alt="Location">
+            <div class="m-caption">LOCATIONS</div>
+        </div>
 
-                document.getElementById('joinGallery').onclick = () => {
-                    const token = document.getElementById('manualToken').value.trim();
-                    if (token) {
-                        window.location.href = `gallery.html?token=${token}`;
-                    } else {
-                        alert("Please enter a valid token.");
-                    }
-                };
-            </script>
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800" alt="Occasional">
+            <div class="m-caption">SPECIAL OCCASIONS</div>
+        </div>
 
-            <div class="fade-up" style="margin-top: 100px; animation-delay: 0.3s;">
-                <div class="img-reveal" style="height: 60vh; width: 100%;">
-                    <img src="hero_vibe.jpg" alt="Elegant wedding atmosphere" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-            </div>
-        </section>
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=800" alt="Couple">
+            <div class="m-caption">COUPLES</div>
+        </div>
 
-        <section id="about" class="container" style="border-top: 1px solid var(--border);">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 80px; align-items: start;">
-                <div>
-                    <h2 class="section-title">The Digital Guestbook.</h2>
-                </div>
-                <div>
-                    <p style="color: var(--text-muted); font-size: 18px; line-height: 1.8;">
-                        Traditional sharing is fragmented. Capture brings every guest's lens into one high-end, private gallery. Secure access via unique tokens ensure your moments stay within your circle.
-                    </p>
-                </div>
-            </div>
-        </section>
-    </main>
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1609220136736-443140cffec6?q=80&w=800" alt="Family">
+            <div class="m-caption">FAMILY</div>
+        </div>
 
-    <footer class="container" style="padding: 100px 0 60px; border-top: 1px solid var(--border); text-align: center;">
-        <p style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em;">&copy; 2026 Capture. Designed for Elegance.</p>
+        <div class="m-item">
+            <img src="https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?q=80&w=800" alt="Commercial">
+            <div class="m-caption">COMMERCIAL</div>
+        </div>
+    </section>
+
+    <footer class="footer" id="about">
+        <div class="footer-links">
+            <a href="#">INSTAGRAM</a>
+            <a href="#">TWITTER</a>
+            <a href="#">CONTACT</a>
+        </div>
+        <p>CAPTURE. ALL RIGHTS RESERVED &copy; 2026</p>
     </footer>
 
+    <script>
+        // Simple subtle parallax on scroll
+        document.addEventListener('scroll', () => {
+            const video = document.querySelector('.splash-video');
+            if (video && window.scrollY < window.innerHeight) {
+                video.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+            }
+        });
+    </script>
 </body>
 </html>

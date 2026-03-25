@@ -63,8 +63,11 @@
 
     <nav class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 40px 0;">
         <a href="index.html" style="text-decoration: none; font-size: 20px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-main);">Capture.</a>
-        <div id="eventInfo" style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
-            <!-- Event name will appear here -->
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <div id="eventInfo" style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+                <!-- Event name will appear here -->
+            </div>
+            <button id="downloadAllBtn" class="btn btn-outline" style="padding: 10px 20px; font-size: 10px; display: none;">Download All</button>
         </div>
     </nav>
 
@@ -89,79 +92,151 @@
         Uploading... <span id="progressText">0%</span>
     </div>
 
-    <!-- Load Configuration First -->
+    <!-- Load Configuration -->
     <script src="config.js"></script>
 
-    <!-- Load Firebase Configuration (Protected) -->
-    <script src="config.js"></script>
-
-    <!-- Firebase SDKs (Compat v8) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <!-- Supabase SDK (Latest v2) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
+        let supabaseClient;
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        const galleryContent = document.getElementById('galleryContent');
+        const tokenError = document.getElementById('tokenError');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const eventInfo = document.getElementById('eventInfo');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+
         try {
-            // Initialize Firebase using the global firebaseConfig from config.js
-            if (typeof firebaseConfig === 'undefined') {
-                throw new Error("Configuration not found. Please ensure config.js exists.");
+            // Initialize Supabase
+            if (typeof supabaseConfig !== 'undefined' && supabaseConfig.url && supabaseConfig.key) {
+                const { createClient } = window.supabase;
+                supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
+                console.log("⚡ Supabase Initialized");
+            } else {
+                console.warn("Supabase Configuration missing in config.js");
             }
-
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
-            const storage = firebase.storage();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-
-            const galleryContent = document.getElementById('galleryContent');
-            const tokenError = document.getElementById('tokenError');
-            const galleryGrid = document.getElementById('galleryGrid');
-            const eventInfo = document.getElementById('eventInfo');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const fileInput = document.getElementById('fileInput');
 
             if (!token) {
                 tokenError.style.display = 'block';
-            } else {
+            } else if (supabaseClient) {
                 verifyToken();
+            } else {
+                alert("Please update config.js with your Supabase credentials first.");
             }
 
             async function verifyToken() {
                 try {
-                    const querySnapshot = await db.collection("events").where("token", "==", token).get();
+                    const { data, error } = await supabaseClient
+                        .rpc('get_event_by_token', { p_token: token })
+                        .single();
 
-                    if (querySnapshot.empty) {
+                    if (error || !data) {
                         tokenError.style.display = 'block';
                     } else {
-                        const eventData = querySnapshot.docs[0].data();
-                        eventInfo.innerText = eventData.name;
+                        eventInfo.innerText = data.name;
                         galleryContent.style.display = 'block';
                         uploadBtn.style.display = 'flex';
+                        downloadAllBtn.style.display = 'block';
                         loadPhotos();
+                        listenForChanges();
                     }
                 } catch (err) {
                     console.error("Token verification failed", err);
-                    alert("Authentication Error: " + err.message);
                     tokenError.style.display = 'block';
                 }
             }
 
-            function loadPhotos() {
-                db.collection("photos").where("token", "==", token)
-                  .onSnapshot((snapshot) => {
-                    galleryGrid.innerHTML = '';
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const item = document.createElement('div');
-                        item.className = 'gallery-item fade-up';
-                        item.innerHTML = `<img src="${data.url}" alt="Event Photo">`;
-                        galleryGrid.appendChild(item);
-                    });
-                }, (err) => {
+            async function loadPhotos() {
+                try {
+                    const { data, error } = await supabaseClient
+                        .rpc('get_photos_by_token', { p_token: token });
+
+                    if (error) throw error;
+
+                    renderPhotos(data);
+                } catch (err) {
                     console.error("Photo loading failed", err);
-                    alert("Gallery Load Error: " + err.message);
+                }
+            }
+
+            async function downloadImage(url, filename) {
+                try {
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename || 'capture-photo.jpg';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                } catch (err) {
+                    console.error("Download failed", err);
+                    // Fallback to opening in new tab if blob fails
+                    window.open(url, '_blank');
+                }
+            }
+
+            function renderPhotos(photos) {
+                galleryGrid.innerHTML = '';
+                const photoRecords = [];
+                photos.forEach((photo) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item fade-up';
+                    item.innerHTML = `
+                        <img src="${photo.url}" alt="Event Photo">
+                        <div style="padding: 15px; background: white; text-align: right;">
+                            <button class="download-trigger" data-url="${photo.url}" style="background: none; border: none; font-size: 10px; color: var(--text-muted); cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-main);">Save to Device</button>
+                        </div>
+                    `;
+                    galleryGrid.appendChild(item);
+                    photoRecords.push(photo);
                 });
+
+                // Attach individual download listeners
+                document.querySelectorAll('.download-trigger').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const url = e.target.getAttribute('data-url');
+                        downloadImage(url, `capture_${Date.now()}.jpg`);
+                    };
+                });
+
+                downloadAllBtn.onclick = async () => {
+                    if (photoRecords.length === 0) return;
+                    
+                    const confirmDown = confirm(`Download all ${photoRecords.length} photos at original quality?`);
+                    if (!confirmDown) return;
+
+                    downloadAllBtn.innerText = "Downloading...";
+                    downloadAllBtn.disabled = true;
+
+                    for (let i = 0; i < photoRecords.length; i++) {
+                        await downloadImage(photoRecords[i].url, `capture_${i+1}.jpg`);
+                        // Small delay to prevent browser hitting rate limits or blocking multiple downloads
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+
+                    downloadAllBtn.innerText = "Download All";
+                    downloadAllBtn.disabled = false;
+                };
+            }
+
+            function listenForChanges() {
+                // simple realtime subscription via Broadcast
+                supabaseClient
+                    .channel(`gallery-${token}`)
+                    .on('broadcast', { event: 'new_photo' }, payload => {
+                        console.log('New photo broadcast received!');
+                        loadPhotos();
+                    })
+                    .subscribe();
             }
 
             uploadBtn.onclick = () => fileInput.click();
@@ -174,39 +249,55 @@
                 const progress = document.getElementById('progressText');
                 status.style.display = 'block';
 
-                for (let file of files) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
                     try {
-                        const storageRef = storage.ref(`photos/${token}/${Date.now()}_${file.name}`);
-                        const uploadTask = storageRef.put(file);
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${token}/${Date.now()}_${i}.${fileExt}`;
+                        const filePath = fileName;
 
-                        uploadTask.on('state_changed', 
-                            (snapshot) => {
-                                const p = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                                progress.innerText = p + '%';
-                            }, 
-                            (error) => {
-                                console.error("Upload failed", error);
-                                alert("UPLOAD FAILED: " + error.message);
-                            }, 
-                            async () => {
-                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                                await db.collection("photos").add({
-                                    token: token,
-                                    url: downloadURL,
-                                    uploadedAt: new Date().toISOString()
-                                });
-                                status.style.display = 'none';
-                            }
-                        );
+                        progress.innerText = `Uploading ${i+1}/${files.length}...`;
+
+                        // 1. Upload to Supabase Storage
+                        const { data: storageData, error: storageError } = await supabaseClient.storage
+                            .from('photos')
+                            .upload(filePath, file);
+
+                        if (storageError) throw storageError;
+
+                        // 2. Get Public URL
+                        const { data: { publicUrl } } = supabaseClient.storage
+                            .from('photos')
+                            .getPublicUrl(filePath);
+
+                        // 3. Save metadata to database
+                        const { error: dbError } = await supabaseClient
+                            .from('photos')
+                            .insert([{
+                                token: token,
+                                url: publicUrl,
+                                storage_path: filePath
+                            }]);
+
+                        if (dbError) throw dbError;
+
+                        // 4. Notify others via Realtime Broadcast
+                        supabaseClient.channel(`gallery-${token}`).send({
+                            type: 'broadcast',
+                            event: 'new_photo',
+                            payload: { filePath }
+                        });
+
                     } catch (uploadErr) {
                         console.error("Upload process error", uploadErr);
-                        alert("PROCESS ERROR: " + uploadErr.message);
+                        alert("UPLOAD ERROR: " + uploadErr.message);
                     }
                 }
+                status.style.display = 'none';
+                loadPhotos();
             };
-        } catch (initErr) {
-            console.error("Firebase Init Failed", initErr);
-            alert("Firebase Error: " + initErr.message);
+        } catch (err) {
+            console.error("System Error:", err);
         }
     </script>
 </body>
